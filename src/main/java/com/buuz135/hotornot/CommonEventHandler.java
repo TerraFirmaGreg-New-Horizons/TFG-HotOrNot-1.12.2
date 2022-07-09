@@ -7,6 +7,7 @@ import gregtech.common.items.MetaItems;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
 import net.dries007.tfc.api.capability.heat.IItemHeat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemStack;
@@ -41,65 +42,31 @@ public class CommonEventHandler {
     }
 
     @SubscribeEvent
-    public static void onTick(TickEvent.WorldTickEvent event)
+    public static void onTick(TickEvent.PlayerTickEvent event)
     {
-        World world = event.world;
+        World world = event.player.world;
+        EntityPlayer entityPlayer = event.player;
 
         if (event.phase == TickEvent.Phase.START)
         {
-            for (EntityPlayerMP entityPlayer : FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers())
+
+            if (!entityPlayer.isBurning() && !entityPlayer.isCreative() && entityPlayer.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null))
             {
-                if (!entityPlayer.isBurning() && !entityPlayer.isCreative() && entityPlayer.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null))
+                IItemHandler handler = entityPlayer.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+                for (int i = 0; i < handler.getSlots(); i++)
                 {
-                    IItemHandler handler = entityPlayer.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
-                    for (int i = 0; i < handler.getSlots(); i++)
+                    ItemStack stack = handler.getStackInSlot(i);
+
+                    // Fluids
+                    if (!stack.isEmpty() && stack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null) && !HotLists.isRemoved(stack))
                     {
-                        ItemStack stack = handler.getStackInSlot(i);
-
-                        // Fluids
-                        if (!stack.isEmpty() && stack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null) && !HotLists.isRemoved(stack))
+                        IFluidHandlerItem fluidHandlerItem = stack.getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
+                        FluidStack fluidStack = fluidHandlerItem.drain(1000, false);
+                        if (fluidStack != null)
                         {
-                            IFluidHandlerItem fluidHandlerItem = stack.getCapability(CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
-                            FluidStack fluidStack = fluidHandlerItem.drain(1000, false);
-                            if (fluidStack != null)
+                            for (FluidEffect effect : FluidEffect.values())
                             {
-                                for (FluidEffect effect : FluidEffect.values())
-                                {
-                                    if (effect.isValid.test(fluidStack))
-                                    {
-                                        ItemStack offHand = entityPlayer.getHeldItemOffhand();
-                                        if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
-                                        {
-                                            if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
-                                            {
-                                                GTUtility.doDamageItem(offHand, 1, false);
-                                                return;
-                                            }
-                                        }
-                                        else if (world.getTotalWorldTime() % 20 == 0)
-                                        {
-                                            effect.interactPlayer.accept(entityPlayer);
-
-                                            if (HotConfig.YEET)
-                                            {
-                                                entityPlayer.inventory.deleteStack(stack);
-                                                entityPlayer.dropItem(stack, false, true);
-                                                return;
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-                        // Items
-                        else if (HotConfig.HOT_ITEMS && !stack.isEmpty() && !HotLists.isRemoved(stack))
-                        {
-                            // TFC Heat Capability
-                            if (stack.hasCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null))
-                            {
-                                IItemHeat heatHandlerItem = stack.getCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
-                                if (heatHandlerItem != null && heatHandlerItem.getTemperature() >= HotConfig.HOT_ITEM)
+                                if (effect.isValid.test(fluidStack))
                                 {
                                     ItemStack offHand = entityPlayer.getHeldItemOffhand();
                                     if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
@@ -110,25 +77,30 @@ public class CommonEventHandler {
                                             return;
                                         }
                                     }
-                                    else if (world.getTotalWorldTime() % 10 == 0)
+                                    else if (world.getTotalWorldTime() % 20 == 0)
                                     {
-                                        entityPlayer.setFire(1);
+                                        effect.interactPlayer.accept(entityPlayer);
 
                                         if (HotConfig.YEET)
                                         {
-                                            // Только для фикса TFC
-                                            entityPlayer.closeScreen();
-
                                             entityPlayer.inventory.deleteStack(stack);
                                             entityPlayer.dropItem(stack, false, true);
                                             return;
                                         }
                                     }
                                 }
+
                             }
-                            // Items from config
-                            // Hot
-                            else if (HotLists.isHot(stack))
+                        }
+                    }
+                    // Items
+                    else if (HotConfig.HOT_ITEMS && !stack.isEmpty() && !HotLists.isRemoved(stack))
+                    {
+                        // TFC Heat Capability
+                        if (stack.hasCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null))
+                        {
+                            IItemHeat heatHandlerItem = stack.getCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
+                            if (heatHandlerItem != null && heatHandlerItem.getTemperature() >= HotConfig.HOT_ITEM)
                             {
                                 ItemStack offHand = entityPlayer.getHeldItemOffhand();
                                 if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
@@ -142,42 +114,70 @@ public class CommonEventHandler {
                                 else if (world.getTotalWorldTime() % 10 == 0)
                                 {
                                     entityPlayer.setFire(1);
+
                                     if (HotConfig.YEET)
                                     {
+                                        // Только для фикса TFC
+                                        entityPlayer.closeScreen();
+
                                         entityPlayer.inventory.deleteStack(stack);
                                         entityPlayer.dropItem(stack, false, true);
                                         return;
                                     }
                                 }
                             }
-                            // Cold
-                            else if (HotLists.isCold(stack))
-                            {
-                                ItemStack offHand = entityPlayer.getHeldItemOffhand();
-                                if (offHand.getItem().equals(MetaItems.AXE.getStackForm().getItem()))
-                                {
-                                    if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
-                                    {
-                                        GTUtility.doDamageItem(offHand, 1, false);
-                                        return;
-                                    }
-                                }
-                                else if (world.getTotalWorldTime() % 10 == 0)
-                                {
-                                    entityPlayer.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, 21, 1));
-                                    entityPlayer.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, 21, 1));
-                                }
-                            }
-                            // Gaseous
-                            else if (HotLists.isGaseous(stack))
-                            {
-                                if (world.getTotalWorldTime() % 10 == 0)
-                                {
-                                    entityPlayer.addPotionEffect(new PotionEffect(MobEffects.LEVITATION, 21, 1));
-                                }
-                            }
-
                         }
+                        // Items from config
+                        // Hot
+                        else if (HotLists.isHot(stack))
+                        {
+                            ItemStack offHand = entityPlayer.getHeldItemOffhand();
+                            if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
+                            {
+                                if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
+                                {
+                                    GTUtility.doDamageItem(offHand, 1, false);
+                                    return;
+                                }
+                            }
+                            else if (world.getTotalWorldTime() % 10 == 0)
+                            {
+                                entityPlayer.setFire(1);
+                                if (HotConfig.YEET)
+                                {
+                                    entityPlayer.inventory.deleteStack(stack);
+                                    entityPlayer.dropItem(stack, false, true);
+                                    return;
+                                }
+                            }
+                        }
+                        // Cold
+                        else if (HotLists.isCold(stack))
+                        {
+                            ItemStack offHand = entityPlayer.getHeldItemOffhand();
+                            if (offHand.getItem().equals(MetaItems.AXE.getStackForm().getItem()))
+                            {
+                                if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
+                                {
+                                    GTUtility.doDamageItem(offHand, 1, false);
+                                    return;
+                                }
+                            }
+                            else if (world.getTotalWorldTime() % 10 == 0)
+                            {
+                                entityPlayer.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, 21, 1));
+                                entityPlayer.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, 21, 1));
+                            }
+                        }
+                        // Gaseous
+                        else if (HotLists.isGaseous(stack))
+                        {
+                            if (world.getTotalWorldTime() % 10 == 0)
+                            {
+                                entityPlayer.addPotionEffect(new PotionEffect(MobEffects.LEVITATION, 21, 1));
+                            }
+                        }
+
                     }
                 }
             }
