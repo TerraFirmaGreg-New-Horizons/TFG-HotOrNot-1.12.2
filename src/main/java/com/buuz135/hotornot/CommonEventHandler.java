@@ -47,9 +47,8 @@ public class CommonEventHandler {
         World world = event.player.world;
         EntityPlayer entityPlayer = event.player;
 
-        if (event.phase == TickEvent.Phase.START)
+        if (event.phase == TickEvent.Phase.START && !world.isRemote)
         {
-
             if (!entityPlayer.isBurning() && !entityPlayer.isCreative() && entityPlayer.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null))
             {
                 IItemHandler handler = entityPlayer.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
