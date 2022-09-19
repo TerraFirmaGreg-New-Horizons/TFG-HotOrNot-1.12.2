@@ -2,13 +2,13 @@ package com.buuz135.hotornot;
 
 import com.buuz135.hotornot.config.HotConfig;
 import com.buuz135.hotornot.config.HotLists;
+import com.speeedcraft.tfgmod.gregtech.items.TFGModMetaItem;
+import com.speeedcraft.tfgmod.gregtech.items.TFGModMetaItems;
 import gregtech.api.util.GTUtility;
 import gregtech.common.items.MetaItems;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
 import net.dries007.tfc.api.capability.heat.IItemHeat;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionEffect;
@@ -19,13 +19,11 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import speeedcraft.tfgmod.gregtech.items.TFGModMetaItem;
 
 import static com.buuz135.hotornot.config.HotConfig.DURABILITY_DECREASING;
 
@@ -68,7 +66,7 @@ public class CommonEventHandler {
                                 if (effect.isValid.test(fluidStack))
                                 {
                                     ItemStack offHand = entityPlayer.getHeldItemOffhand();
-                                    if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
+                                    if (offHand.getItem().equals(TFGModMetaItems.TONGS.getStackForm().getItem()))
                                     {
                                         if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
                                         {
@@ -102,7 +100,7 @@ public class CommonEventHandler {
                             if (heatHandlerItem != null && heatHandlerItem.getTemperature() >= HotConfig.HOT_ITEM)
                             {
                                 ItemStack offHand = entityPlayer.getHeldItemOffhand();
-                                if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
+                                if (offHand.getItem().equals(TFGModMetaItems.TONGS.getStackForm().getItem()))
                                 {
                                     if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
                                     {
@@ -131,7 +129,7 @@ public class CommonEventHandler {
                         else if (HotLists.isHot(stack))
                         {
                             ItemStack offHand = entityPlayer.getHeldItemOffhand();
-                            if (offHand.getItem().equals(TFGModMetaItem.TONGS.getStackForm().getItem()))
+                            if (offHand.getItem().equals(TFGModMetaItems.TONGS.getStackForm().getItem()))
                             {
                                 if ((world.getTotalWorldTime() % DURABILITY_DECREASING == 0))
                                 {

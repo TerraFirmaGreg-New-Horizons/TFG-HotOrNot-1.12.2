@@ -12,7 +12,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 
 group = 'speeedcraft'
-version = '1.4'
+version = '1.5'
 
 java {
     archivesBaseName = 'hotornot'
@@ -96,7 +96,7 @@ dependencies {
     implementation fg.deobf("curse.maven:tfc-302973:3645502")
     implementation fg.deobf("curse.maven:GTCEU-557242:3745499")
 
-    implementation files("libs/tfgmod-2.006.jar")
+    implementation files("libs/tfgmod-2.0.1.jar")
 }
 
 // Example for how to get properties into the manifest for reading at runtime.
